@@ -1,0 +1,130 @@
+#!/bin/bash
+# 2023-05-17 irb-dirstat Written by Ian Bruntlett as a fast and cheap way of
+#            comparing number of bytes, files, and directories in a directory.
+#            With help from shellcheck (a lint-like tool for bash).
+# 2023-05-21 Used a here document in display_help()
+# 2023-05-27 Implemented command line units for outputting bytes / KiB / MiB / GiB / TiB
+#            An argument of --help outputs the help message
+# 2023-05-30 Tidied up output of "Dir count" etc for consistency
+# 2023-06-04 Added --commas and --no-commas for outputting byte count with commas
+# 2023-06-25 Added parameter support -e or -E for exbibyte
+# 2023-08-29 Added info on Exbibyte support to display_help()
+
+# default values, to be overridden by command line options
+divisor_scaling="Byte"
+divisor=1
+use_commas=0
+
+function report_bytes_used_in_files()
+{
+    echo -n "$divisor_scaling count "
+    byte_count=$(count_bytes_used_in_files "$1")
+    if [ $use_commas -eq "1" ] ; then
+	printf "%'f\n" "$byte_count"
+    else
+	echo "$byte_count"
+    fi    
+}
+
+function count_bytes_used_in_files()
+{
+    # this command inspired by https://stackoverflow.com
+    find "$1/"* -type f -print0 | xargs -0 stat --format=%s | awk -v divisor="$divisor" '{s+=$1} END {print s/divisor}'
+}
+
+function report_no_of_directories()
+{
+    echo -n "Dir  count "
+    count_no_of_directories "$1"
+}
+function count_no_of_directories()
+{
+     find "$1"/* -type d | wc -l     
+}
+
+function report_no_of_files()
+{
+    echo -n "File count "
+    count_no_of_files "$1"
+}
+
+function count_no_of_files()
+{
+     find "$1"/* -type f | wc -l     
+}
+
+# return value 0=files present, 1=error or no files present
+function are_there_any_files()
+{
+    find "$1"/* -maxdepth 1 -type f -o -type d -iname "*" 1> /dev/null
+}
+
+function do_dirstat()
+{
+   if [ $# -ne 1  ] ; then
+      echo "do_dirstat insufficient no of parameters ($#)." >&2;
+      return 1;
+   fi;
+
+   if ! are_there_any_files "$1" ; then
+       # echo NO FILES
+       echo "$1"
+       echo "$divisor_scaling" count 0
+       echo "Dir  count 0"
+       echo "File count 0"
+       echo
+      return 1 # not sure if this is a useful value
+   fi
+
+   if [ ! -d "$1"  ] ; then
+      echo "Parameter $1 is not a directory" >&2;
+      return 1;
+    fi;
+    
+    echo "$1"
+    report_bytes_used_in_files "$1"
+    report_no_of_directories "$1"
+    report_no_of_files "$1"
+    echo
+}
+
+function display_help()
+{
+  cat <<END_OF_HELP
+irb-dirstat: usage irb-dirstat directory1 [directory2 etc]
+Used to check actual number of bytes, files, and directories in a directory
+
+Formatting output options for bytes used in files
+-b or -B output number of bytes (this is the default)
+-k or -K output number of KiB
+-m or -M output number of MiB
+-g or -G output number of GiB
+-t or -T output number of TiB
+-e or -E output number of EiB
+--commas    output byte count with commas
+--no-commas output byte count without commas
+
+--help display this message
+END_OF_HELP
+}
+
+if [ $# -eq 0 ] ; then
+  display_help
+  exit 
+fi
+
+for arg in "$@"
+do
+    case "$arg" in
+	-b|-B) divisor_scaling="Byte"; divisor=1 ;;
+	-k|-K) divisor_scaling="KiB "; divisor=1024 ;;
+	-m|-M) divisor_scaling="MiB "; divisor=1048576 ;;
+	-g|-G) divisor_scaling="GiB "; divisor=$((2**30)) ;;
+	-t|-T) divisor_scaling="TiB "; divisor=$((2**40)) ;;
+	-e|-E) divisor_scaling="EiB "; divisor=$((2**50)) ;;
+	--help) display_help ;;
+	--commas) use_commas=1;;
+	--no-commas) use_commas=0;;	
+	*) do_dirstat "$arg";;
+    esac    
+done
