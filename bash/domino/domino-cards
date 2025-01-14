@@ -1,0 +1,28 @@
+#!/bin/bash
+# Written by Ian Bruntlett, 17th February 2020 to create randomised
+# domino cards for use in Contact's U-NITE's social gathering.
+
+domino_source=sorted-domino.txt
+
+if [ ! -f $domino_source ]
+then
+  echo Error - $0 - unable to access domino file $domino_source
+  exit 1
+fi
+
+if [ $# = 0 ]
+then
+  echo Error - $0 Insufficient arguments
+  echo Usage $0 number-of-cards-to-generate
+  exit 1
+fi
+
+echo $1 random domino cards
+echo
+
+for (( c = 1; c <= $1; c += 1 ))
+do
+  echo Domino Card $c
+  shuf $domino_source | nl
+  echo
+done
