@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# 2025-03-30 (c) Ian Bruntlett
+# Name    : irb-html2markdown
+# Purpose : To run the html2markdown command with less chance of making a silly typing mistake
+
+function Usage
+{
+cat <<END-OF-USAGE-MESSAGE
+Usage: $0 name-of-html-file-1 name-of-html-file-2 name-of-html-file-etc
+
+For each given html filename, convert the HTML file into markdown, writing the results to a file with a similar name of the origin - the only change being the results filename has .md at the end and not .html
+
+Note:
+Because this utility removes the HTML suffix from filenames, you can use globbing to specify input files.
+END-OF-USAGE-MESSAGE
+}
+
+function strip_extension
+{
+ local destination_file
+ # cater for .html source
+ destination_file=$(basename "$1" .html)
+ # cater for HTML source
+ destination_file=$(basename "$destination_file" .HTML)
+ echo "$destination_file"    
+}
+
+function perform_html2markdown()
+{
+ local input_html_file output_markdown_file
+
+ input_html_file="$1"
+ output_markdown_file=$(strip_extension "$input_html_file").md
+ echo Translating  "$input_html_file" to "$output_markdown_file"
+ html2markdown < "$input_html_file" > "$output_markdown_file" || exit $?
+}
+
+if [ $# -lt 1 ]; then
+    Usage >&2
+    exit 1
+fi
+
+while [ "$1" != "" ]; do
+  perform_html2markdown "$1"
+  shift
+done
