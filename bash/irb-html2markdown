@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
-# 2025-03-30 (c) Ian Bruntlett
 # Name    : irb-html2markdown
 # Purpose : To run the html2markdown command with less chance of making a silly typing mistake
-
+# (c) Ian Bruntlett
+#
+# 2025-03-30 Initial version.
+# 2025-07-15 Bug found - strip_extension uses basename which strips preceding directory names as well as the unwanted filename extension
+# 2025-08-14 Use --no-skip-internal-links so internal page links are allowed
+# 2025-08-14 Bug from 2025-07-15 fixed.
+# 2025-08-26 accu-general feedback applied:
+#            better strip_extension()
+#            main loop modified slightly to preserve exit code of perform_html2markdown()
+# 2025-08-27 Fixed main loop bug so that exit code is preserved for the caller to act upon.
+#            Changed exit codes in accordance with Advanced Bash-Scripting Guide
+#            https://tldp.org/LDP/abs/html/exitcodes.html
+#            Exit codes: 10 bad output filename . 11 no parameters passed on the command line.
 function Usage
 {
 cat <<END-OF-USAGE-MESSAGE
@@ -12,35 +23,59 @@ For each given html filename, convert the HTML file into markdown, writing the r
 
 Note:
 Because this utility removes the HTML suffix from filenames, you can use globbing to specify input files.
+
+Return codes:
+0      Success
+1      Input file does not exist
+10     Input filename not a .html or .HTML file
+11     No parameters passed on command line 
 END-OF-USAGE-MESSAGE
 }
 
+# remove .HTML or .html from parameter 1 and then output/return that result.
+# With thanks to accu-general posters: Mathias Gaunard and Hans Vredeveld
+# and Sven
+# See https://www.gnu.org/software/bash/manual/bash.html#Shell-Parameter-Expansion
+# 10 - Input filename not an html or HTML file name
 function strip_extension
 {
- local destination_file
- # cater for .html source
- destination_file=$(basename "$1" .html)
- # cater for HTML source
- destination_file=$(basename "$destination_file" .HTML)
- echo "$destination_file"    
+  local filename stub
+  filename=$1
+  case "$filename" in
+    *.html | *.HTML)
+      stub="${filename%.*}"
+   ;;
+   *)
+    echo "Not an HTML file name."
+    return 10
+   ;;
+  esac
+  echo "$stub"
 }
 
 function perform_html2markdown()
 {
- local input_html_file output_markdown_file
+  local input_html_file output_markdown_file
 
- input_html_file="$1"
- output_markdown_file=$(strip_extension "$input_html_file").md
- echo Translating  "$input_html_file" to "$output_markdown_file"
- html2markdown < "$input_html_file" > "$output_markdown_file" || exit $?
+  input_html_file="$1"
+
+  if ! output_markdown_file=$(strip_extension "$input_html_file").md ; then
+    echo "Bad HTML filename: $input_html_file";
+    return 10; # unsupported or bad filename extension
+  fi
+      
+  echo Translating  "$input_html_file" to "$output_markdown_file"
+
+  html2markdown --no-skip-internal-links < "$input_html_file" > "$output_markdown_file"
 }
+
+# main code here
 
 if [ $# -lt 1 ]; then
     Usage >&2
-    exit 1
+    exit 11 # error. need at least 1 parameter
 fi
 
-while [ "$1" != "" ]; do
-  perform_html2markdown "$1"
-  shift
+for f in "$@"; do
+    perform_html2markdown "$f" || exit
 done
