@@ -3,3 +3,4 @@ print_object_type
 function_object_state
 function_object_capture
 functional_helpers
+composing_functional_helpers
