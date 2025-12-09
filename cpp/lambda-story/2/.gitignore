@@ -3,3 +3,6 @@ diff_types
 lambda_and_function_obj
 std_function_and_auto
 capturing_by_copy
+invocation_counter
+capturing_globals
+capturing_static

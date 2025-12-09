@@ -7,7 +7,8 @@ CXXFLAGS = -g -Wall -Wshadow -Wconversion -std=c++2a
 
 executables = lambda_and_function_obj diff_types \
               std_function_and_auto copying_lambdas \
-	      capturing_by_copy
+	      capturing_by_copy invocation_counter \
+	      capturing_static
 
 # create a linker map file for extra info on the executable
 # (not needed at the moment)
