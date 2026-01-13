@@ -6,3 +6,6 @@ https://github.com/ian-bruntlett/studies
 
 The author's code:
 https://github.com/fenbf/cpplambdastory-code
+
+cpp/cppmove
+Code snippets from Nicolai M. Josuttis' C++ Move Semantics
