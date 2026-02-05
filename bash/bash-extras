@@ -1,0 +1,37 @@
+# bash-extras.
+# Ian Bruntlett, 4th Jan 2024 - 5th Feb 2026
+# my extras for directory handling
+# I check my bash code using the shellcheck package and command.
+
+# to get these functions defined when a shell window opened, add this bit of text
+# to ~./bashrc after removing the comment character at the beginning of each line
+#if [ -f ~/bin/bash-extras ]; then
+#    . ~/bin/bash-extras
+#fi
+
+# TO DO: output ALL error messages to stderr
+
+# cdrm - change to parent directory, remove that child directory (must be empty).
+# if the old directory cannot be deleted, stay in that directory so you can
+# work on those files.
+cdrm()
+{
+    # shellcheck disable=SC2164
+    cd ..
+    if ! rmdir -v "$OLDPWD" ; then
+	echo -en "\aFAILED: Still in : " 1>&2
+        # shellcheck disable=SC2164
+	cd -
+    fi
+}
+
+# mkcd - make a directory and change into it.
+mkcd()
+{
+    if ! mkdir -p "$1" ; then
+	echo -e "\aFAILED to mkdir : " 1>&2
+    else
+        # shellcheck disable=SC2164
+        cd "$1"
+    fi	
+}
