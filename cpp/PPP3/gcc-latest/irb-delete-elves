@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Name    : irb-delete-elves
+# Purpose : to go through list of filenames on the command line,
+# checking to see they are ELF executables, then offering to delete them,
+# one at a time.
+#
+# Typical usage:
+# ./irb-delete-elves *
+#
+# (c) Ian Bruntlett. Use at your own risk.
+#
+# 2026-02-22 Initial version.
+# Exit value
+# 0 normal exit
+# 1 if bad parameter(s)
+function Usage
+{    
+cat <<END-OF-USAGE-MESSAGE
+$0
+Usage: List of file to check if they are ELF files and to
+delete them if they are.
+
+Return codes:
+END-OF-USAGE-MESSAGE
+}
+
+# function improved so that if a file begins with a - character
+# it still
+function ask-to-delete
+{
+  if file -- "$1" | grep -q ELF; then
+      rm -iv -- "$1"
+  fi
+}
+
+# main code here
+if [ $# -lt 1 ]; then
+    Usage >&2
+    exit 1 # error. need at least 1 parameter
+fi
+
+for f in "$@"; do
+    ask-to-delete "$f"
+done

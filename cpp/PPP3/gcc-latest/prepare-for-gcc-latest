@@ -1,0 +1,10 @@
+#!/bin/bash
+if ! echo $PATH | grep gcc-latest/bin: - ; then
+    echo gcc-latest not on path... putting it on
+    set -x
+    PATH=/opt/gcc-latest/bin:$PATH
+    cd ~/gcc-new
+    set +x
+else
+    echo gcc-latest already on path
+fi
